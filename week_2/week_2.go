@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Task struct {
@@ -87,11 +88,59 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tasks)
 }
 
+func createTask(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title string `json:"title"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid JSON",
+		})
+		return
+	}
+
+	if strings.TrimSpace(input.Title) == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "title is required",
+		})
+		return
+	}
+
+	nextID := 1
+	for _, task := range tasks {
+		if task.ID >= nextID {
+			nextID = task.ID + 1
+		}
+	}
+
+	newTask := Task{
+		ID:    nextID,
+		Title: input.Title,
+		Done:  false,
+	}
+
+	tasks = append(tasks, newTask)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(w).Encode(newTask)
+}
+
 func main() {
 	http.HandleFunc("/", apiDetails)
 	http.HandleFunc("/health", healthCheck)
 	http.HandleFunc("GET /tasks", getTasks)
 	http.HandleFunc("GET /tasks/{id}", getTask)
+	http.HandleFunc("POST /tasks", createTask)
 
 	fmt.Println("Server running on http://localhost:8000")
 
