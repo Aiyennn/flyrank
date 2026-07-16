@@ -19,9 +19,12 @@ A simple REST API built with Go using the standard `net/http` package.
 Clone the repository
 
 ```bash
-git clone https://github.com/<username>/task-api-go.git
-cd task-api-go
+git clone https://github.com/Aiyennn/flyrank.git
+cd flyrank
 ```
+
+All the project files (`go.mod`, `go.sum`, and `week_2.go`) are located in the `week_2` directory, so the following commands should be run from there.
+
 
 Install dependencies
 
