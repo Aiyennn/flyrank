@@ -1,32 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
+	"strconv"
 )
 
 type Task struct {
-	ID int `json:"id"`
+	ID    int    `json:"id"`
 	Title string `json:"title"`
-	Done bool `json:"done"`
+	Done  bool   `json:"done"`
 }
 
 var tasks = []Task{
 	{
-		ID: 1,
+		ID:    1,
 		Title: "Buy groceries",
-		Done: false,
+		Done:  false,
 	},
 	{
-		ID: 2,
+		ID:    2,
 		Title: "Walk the dog",
-		Done: true,
+		Done:  true,
 	},
 	{
-		ID: 3,
+		ID:    3,
 		Title: "Learn Go",
-		Done: false,
+		Done:  false,
 	},
 }
 
@@ -36,8 +37,8 @@ func apiDetails(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	response := map[string]any{
-		"name": "Task API",
-		"version": "1.0",
+		"name":      "Task API",
+		"version":   "1.0",
 		"endpoints": []string{"/tasks"},
 	}
 
@@ -56,10 +57,41 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func getTask(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for _, task := range tasks {
+		if task.ID == id {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(task)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"error": "Task not found",
+	})
+}
+
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
+}
 
 func main() {
 	http.HandleFunc("/", apiDetails)
 	http.HandleFunc("/health", healthCheck)
+	http.HandleFunc("GET /tasks", getTasks)
+	http.HandleFunc("GET /tasks/{id}", getTask)
 
 	fmt.Println("Server running on http://localhost:8000")
 
