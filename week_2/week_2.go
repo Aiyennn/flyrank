@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+import (
+    httpSwagger "github.com/swaggo/http-swagger"
+
+    _ "week_2/docs"
+)
+
+// Task represents a single to-do item.
 type Task struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
@@ -32,6 +39,13 @@ var tasks = []Task{
 	},
 }
 
+// apiDetails godoc
+// @Summary      Get API details
+// @Description  Returns basic metadata about the Task API, including its name, version, and available endpoints.
+// @Tags         meta
+// @Produce      json
+// @Success      200  {object}  map[string]any
+// @Router       / [get]
 func apiDetails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -46,6 +60,13 @@ func apiDetails(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// healthCheck godoc
+// @Summary      Health check
+// @Description  Returns the health status of the API.
+// @Tags         meta
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       /health [get]
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -58,6 +79,16 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// getTask godoc
+// @Summary      Get a task by ID
+// @Description  Returns a single task matching the given ID.
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path      int  true  "Task ID"
+// @Success      200  {object}  Task
+// @Failure      400  {object}  map[string]string  "Invalid task ID"
+// @Failure      404  {object}  map[string]string  "Task not found"
+// @Router       /tasks/{id} [get]
 func getTask(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 
@@ -83,11 +114,28 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// getTasks godoc
+// @Summary      List all tasks
+// @Description  Returns the full list of tasks.
+// @Tags         tasks
+// @Produce      json
+// @Success      200  {array}  Task
+// @Router       /tasks [get]
 func getTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
+// createTask godoc
+// @Summary      Create a task
+// @Description  Creates a new task with the given title.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        task  body      object{title=string}  true  "Task to create"
+// @Success      201   {object}  Task
+// @Failure      400   {object}  map[string]string  "Invalid JSON or missing title"
+// @Router       /tasks [post]
 func createTask(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title string `json:"title"`
@@ -135,6 +183,18 @@ func createTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newTask)
 }
 
+// updateTask godoc
+// @Summary      Update a task
+// @Description  Updates the title and done status of an existing task.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int   true  "Task ID"
+// @Param        task  body      Task  true  "Updated task data"
+// @Success      200   {object}  Task
+// @Failure      400   {object}  map[string]string  "Invalid task ID or request body"
+// @Failure      404   {object}  map[string]string  "Task not found"
+// @Router       /tasks/{id} [put]
 func updateTask(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 
@@ -167,6 +227,16 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// deleteTask godoc
+// @Summary      Delete a task
+// @Description  Deletes the task matching the given ID.
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path  int  true  "Task ID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  map[string]string  "Invalid task ID"
+// @Failure      404  {object}  map[string]string  "Task not found"
+// @Router       /tasks/{id} [delete]
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 
@@ -192,6 +262,20 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @title           Task API
+// @version         1.0
+// @description     A simple task management API built with Go's net/http.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.email  support@example.com
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8000
+// @BasePath  /
+
 func main() {
 	http.HandleFunc("/", apiDetails)
 	http.HandleFunc("/health", healthCheck)
@@ -200,8 +284,11 @@ func main() {
 	http.HandleFunc("POST /tasks", createTask)
 	http.HandleFunc("PUT /tasks/{id}", updateTask)
 	http.HandleFunc("DELETE /tasks/{id}", deleteTask)
+	
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	fmt.Println("Server running on http://localhost:8000")
+
 
 	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
