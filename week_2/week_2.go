@@ -135,12 +135,71 @@ func createTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newTask)
 }
 
+func updateTask(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	var updated Task
+	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	for i := range tasks {
+		if tasks[i].ID == id {
+			tasks[i].Title = updated.Title
+			tasks[i].Done = updated.Done
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(tasks[i])
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{
+		"error": "Task not found",
+	})
+}
+
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for i, task := range tasks {
+		if task.ID == id {
+			tasks = append(tasks[:i], tasks[i+1:]...)
+
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{
+		"error": "Task not found",
+	})
+}
+
 func main() {
 	http.HandleFunc("/", apiDetails)
 	http.HandleFunc("/health", healthCheck)
 	http.HandleFunc("GET /tasks", getTasks)
 	http.HandleFunc("GET /tasks/{id}", getTask)
 	http.HandleFunc("POST /tasks", createTask)
+	http.HandleFunc("PUT /tasks/{id}", updateTask)
+	http.HandleFunc("DELETE /tasks/{id}", deleteTask)
 
 	fmt.Println("Server running on http://localhost:8000")
 
