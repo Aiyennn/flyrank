@@ -39,3 +39,12 @@ func (s *AuthService) SignUp(email string, password string) (*types.SignupRespon
 
 	return resp, nil
 }
+
+func (s *AuthService) GetUserByToken(token string) (*types.UserResponse, error) {
+	authedClient := s.db.Auth.WithToken(token)
+	resp, err := authedClient.GetUser()
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
