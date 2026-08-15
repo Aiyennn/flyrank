@@ -3,6 +3,7 @@ package protected
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"week_4/internal/auth"
 )
@@ -19,6 +20,12 @@ func NewProtectedHandler(authService *auth.AuthService) *ProtectedHandler {
 
 type errorResponse struct {
 	Error string `json:"error"`
+}
+
+type profileResponse struct {
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (h *ProtectedHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -43,11 +50,15 @@ func (h *ProtectedHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Access token required"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Invalid or expired token"})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(user)
+	_ = json.NewEncoder(w).Encode(profileResponse{
+		ID:        user.User.ID.String(),
+		Email:     user.User.Email,
+		CreatedAt: user.User.CreatedAt,
+	})
 }

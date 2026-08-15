@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	"github.com/supabase-community/gotrue-go/types"
 	supabase "github.com/supabase-community/supabase-go"
 )
@@ -41,6 +43,9 @@ func (s *AuthService) SignUp(email string, password string) (*types.SignupRespon
 }
 
 func (s *AuthService) GetUserByToken(token string) (*types.UserResponse, error) {
+	if s.db == nil || s.db.Auth == nil {
+		return nil, fmt.Errorf("auth client not initialized")
+	}
 	authedClient := s.db.Auth.WithToken(token)
 	resp, err := authedClient.GetUser()
 	if err != nil {
