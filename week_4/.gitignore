@@ -1,0 +1,16 @@
+# Binaries
+/bin/
+/*.exe
+
+# Build/test artifacts
+*.test
+*.out
+
+# Environment / local config
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
