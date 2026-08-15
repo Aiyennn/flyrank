@@ -1,40 +1,33 @@
 package main
 
 import (
-	"context"
 	"log"
+	"net/http"
 
 	"week_4/internal/config"
 	"week_4/internal/database"
-	"week_4/internal/health"
-	"net/http"
+	"week_4/internal/router"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed to load config:", err)
 	}
 
-	ctx := context.Background()
-
-	db, err := database.Connect(ctx, cfg.SupabaseURL)
+	db, err := database.NewClient(cfg.SupabaseURL, cfg.SupabaseKey)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed to create supabase client:", err)
 	}
-	defer db.Close()
 
-	log.Println("Connected to Supabase")
+	log.Println("Supabase client initialized")
 
-	healthService := health.NewHealthService()
-	healthHandler := health.NewHealthHandler(healthService)
-	healthRoute := health.NewHealthRoute(healthHandler)
+	r := router.New(db)
 
-	r := healthRoute.New()
+	addr := ":" + cfg.Port
+	log.Printf("starting server on %s", addr)
 
-	log.Println("starting server on :8080")
-
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(addr, r); err != nil {
 		log.Fatal(err)
 	}
 }

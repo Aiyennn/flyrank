@@ -1,22 +1,20 @@
 package database
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	supabase "github.com/supabase-community/supabase-go"
 )
 
-func Connect(ctx context.Context, url string) (*pgxpool.Pool, error) {
-    db, err := pgxpool.New(ctx, url)
-    if err != nil {
-        return nil, fmt.Errorf("create database pool: %w", err)
-    }
+func NewClient(supabaseURL, supabaseKey string) (*supabase.Client, error) {
+	if supabaseURL == "" || supabaseKey == "" {
+		return nil, fmt.Errorf("SUPABASE_URL and SUPABASE_KEY must be set")
+	}
 
-    if err := db.Ping(ctx); err != nil {
-        db.Close()
-        return nil, fmt.Errorf("ping database: %w", err)
-    }
+	client, err := supabase.NewClient(supabaseURL, supabaseKey, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create supabase client: %w", err)
+	}
 
-    return db, nil
+	return client, nil
 }

@@ -10,15 +10,22 @@ type Config struct {
 	DatabaseURL string
 	SupabaseURL string
 	SupabaseKey string
+	Port        string
 }
 
 func Load() (*Config, error) {
-	if err := godotenv.Load("../.env"); err != nil {
-		return nil, err
-	}
-	return &Config {
+	_ = godotenv.Load("../.env")
+
+	cfg := &Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		SupabaseURL: os.Getenv("SUPABASE_URL"),
 		SupabaseKey: os.Getenv("SUPABASE_KEY"),
-	}, nil
+		Port:        os.Getenv("PORT"),
+	}
+
+	if cfg.Port == "" {
+		cfg.Port = "8080"
+	}
+
+	return cfg, nil
 }
