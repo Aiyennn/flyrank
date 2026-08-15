@@ -7,6 +7,7 @@ import (
 	supabase "github.com/supabase-community/supabase-go"
 
 	"week_4/internal/auth"
+	"week_4/internal/docs"
 	"week_4/internal/health"
 	"week_4/internal/protected"
 	"week_4/internal/public"
@@ -34,6 +35,12 @@ func New(db *supabase.Client) http.Handler {
 	protectedHandler := protected.NewProtectedHandler(authService)
 	protectedRoute := protected.NewProtectedRoute(protectedHandler)
 	r.Mount("/protected", protectedRoute.New(authService))
+
+	docsRoute := docs.NewDocsRoute()
+	r.Mount("/docs", docsRoute.New())
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
+	})
 
 	return r
 }
