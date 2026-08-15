@@ -92,4 +92,24 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
+func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	const prefix = "Bearer "
+	var token string
+	if len(authHeader) > len(prefix) {
+		token = authHeader[len(prefix):]
+	}
+
+	err := h.authService.Logout(token)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+
 

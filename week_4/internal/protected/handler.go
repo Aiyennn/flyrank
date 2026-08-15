@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/supabase-community/gotrue-go/types"
 	"week_4/internal/auth"
+	"week_4/internal/middleware"
 )
 
 type ProtectedHandler struct {
@@ -29,25 +31,8 @@ type profileResponse struct {
 }
 
 func (h *ProtectedHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
-	const prefix = "Bearer "
-	if authHeader == "" || len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Access token required"})
-		return
-	}
-
-	token := authHeader[len(prefix):]
-	if token == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Access token required"})
-		return
-	}
-
-	user, err := h.authService.GetUserByToken(token)
-	if err != nil {
+	user, ok := r.Context().Value(middleware.UserContextKey).(*types.UserResponse)
+	if !ok || user == nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Invalid or expired token"})
@@ -60,5 +45,21 @@ func (h *ProtectedHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		ID:        user.User.ID.String(),
 		Email:     user.User.Email,
 		CreatedAt: user.User.CreatedAt,
+	})
+}
+
+func (h *ProtectedHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(middleware.UserContextKey).(*types.UserResponse)
+	if !ok || user == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: "Invalid or expired token"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"message": "Welcome to the dashboard, " + user.User.Email + "!",
 	})
 }

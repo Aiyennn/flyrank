@@ -25,7 +25,7 @@ func New(db *supabase.Client) http.Handler {
 	authHandler := auth.NewAuthHandler(authService)
 	authRoute := auth.NewAuthRoute(authHandler)
 
-	r.Mount("/auth", authRoute.New())
+	r.Mount("/auth", authRoute.New(authService))
 
 	publicHandler := public.NewPublicHandler()
 	publicRoute := public.NewPublicRoute(publicHandler)
@@ -33,7 +33,7 @@ func New(db *supabase.Client) http.Handler {
 
 	protectedHandler := protected.NewProtectedHandler(authService)
 	protectedRoute := protected.NewProtectedRoute(protectedHandler)
-	r.Mount("/protected", protectedRoute.New())
+	r.Mount("/protected", protectedRoute.New(authService))
 
 	return r
 }

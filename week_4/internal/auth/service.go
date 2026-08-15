@@ -52,4 +52,13 @@ func (s *AuthService) GetUserByToken(token string) (*types.UserResponse, error) 
 		return nil, err
 	}
 	return resp, nil
-}
+}
+
+func (s *AuthService) Logout(token string) error {
+	if s.db == nil || s.db.Auth == nil {
+		return fmt.Errorf("auth client not initialized")
+	}
+	authedClient := s.db.Auth.WithToken(token)
+	return authedClient.Logout()
+}
+
